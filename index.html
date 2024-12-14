@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كويز الكسور المتكافئة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin: 0;
+            color: #333;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 10px 0 20px;
+            color: #666;
+        }
+
+         h3 {
+            font-size: 18px;
+            margin: 10px 0 20px;
+            color: #4509ed;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .header div {
+            font-size: 16px;
+            color: #444;
+        }
+
+        .question-box {
+            background: #eaf4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            position: relative;
+        }
+
+        .fraction {
+            display: inline-block;
+            text-align: center;
+        }
+
+        .fraction .numerator {
+            border-bottom: 1px solid #000;
+            padding: 5px;
+        }
+
+        .fraction .denominator {
+            padding: 5px;
+        }
+
+        .question-box .drop-zone {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+        }
+
+        .question-box .drop-zone.correct {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .question-box .drop-zone.wrong {
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .answers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .answer {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fffcc8;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .answer .fraction {
+            display: inline-block;
+        }
+
+        .answer.dragging {
+            opacity: 0.5;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+        }
+
+        button:disabled {
+            background: #ccc;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>الكسور المكافئة</h1>
+        <h2>استخدم الضرب أو القسمة لمعرفة الكسر المكافئ</h2>
+        <h3>اسحب الكسر المكافئ لمستطيل الإجابة الأبيض</h3>
+        <div class="header" id="header">
+            <div>السؤال: <span id="question-number">١</span> / ١٠</div>
+            <div class="timer" id="timer">الوقت: ٣٠ ثانية</div>
+            <div>الدرجة: <span id="score">٠</span></div>
+        </div>
+        <div class="question-box">
+            <div id="question"></div>
+            <div class="drop-zone" id="drop-zone"></div>
+        </div>
+        <div class="answers" id="answers"></div>
+        <div class="controls">
+            <button id="restart-button">إعادة تشغيل</button>
+            <button id="end-button">إنهاء</button>
+        </div>
+        <div class="footer">
+            تصميم وفكرة قناة فنون الرياضيات بإشراف المعلمة/سعاد الغامدي ـ تنفيذ/الذكاء الاصطناعي
+        </div>
+    </div>
+    <script>
+        const questions = [
+            { question: { numerator: '١', denominator: '٢' }, options: [{ numerator: '٢', denominator: '٤' }, { numerator: '٣', denominator: '٥' }, { numerator: '٤', denominator: '٦' }], correct: { numerator: '٢', denominator: '٤' } },
+            { question: { numerator: '٢', denominator: '٣' }, options: [{ numerator: '٤', denominator: '٦' }, { numerator: '٣', denominator: '٤' }, { numerator: '٥', denominator: '٦' }], correct: { numerator: '٤', denominator: '٦' } },
+            { question: { numerator: '٣', denominator: '٤' }, options: [{ numerator: '٦', denominator: '٨' }, { numerator: '٩', denominator: '١٢' }, { numerator: '٤', denominator: '٥' }], correct: { numerator: '٦', denominator: '٨' } },
+            { question: { numerator: '٤', denominator: '٥' }, options: [{ numerator: '٨', denominator: '١٠' }, { numerator: '٩', denominator: '١١' }, { numerator: '٥', denominator: '٦' }], correct: { numerator: '٨', denominator: '١٠' } },
+            { question: { numerator: '٥', denominator: '٦' }, options: [{ numerator: '١٠', denominator: '١٢' }, { numerator: '٦', denominator: '٧' }, { numerator: '١٢', denominator: '١٥' }], correct: { numerator: '١٠', denominator: '١٢' } },
+            { question: { numerator: '٦', denominator: '٧' }, options: [{ numerator: '١٢', denominator: '١٤' }, { numerator: '٧', denominator: '٨' }, { numerator: '٩', denominator: '١٠' }], correct: { numerator: '١٢', denominator: '١٤' } },
+            { question: { numerator: '٧', denominator: '٨' }, options: [{ numerator: '١٤', denominator: '١٦' }, { numerator: '٨', denominator: '٩' }, { numerator: '١٥', denominator: '١٧' }], correct: { numerator: '١٤', denominator: '١٦' } },
+            { question: { numerator: '٨', denominator: '٩' }, options: [{ numerator: '١٦', denominator: '١٨' }, { numerator: '٩', denominator: '١٠' }, { numerator: '١٧', denominator: '١٨' }], correct: { numerator: '١٦', denominator: '١٨' } },
+            { question: { numerator: '٩', denominator: '١٠' }, options: [{ numerator: '١٨', denominator: '٢٠' }, { numerator: '١٩', denominator: '٢١' }, { numerator: '١٠', denominator: '١١' }], correct: { numerator: '١٨', denominator: '٢٠' } },
+            { question: { numerator: '١٠', denominator: '١١' }, options: [{ numerator: '٢٠', denominator: '٢٢' }, { numerator: '١١', denominator: '١٢' }, { numerator: '٢١', denominator: '٢٣' }], correct: { numerator: '٢٠', denominator: '٢٢' } },
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 30;
+
+        const timerElement = document.getElementById('timer');
+        const questionElement = document.getElementById('question');
+        const dropZone = document.getElementById('drop-zone');
+        const answersContainer = document.getElementById('answers');
+        const questionNumberElement = document.getElementById('question-number');
+        const scoreElement = document.getElementById('score');
+        const headerElement = document.getElementById('header');
+        const restartButton = document.getElementById('restart-button');
+        const endButton = document.getElementById('end-button');
+
+        function convertToArabicNumerals(number) {
+            return number.toString().replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 30;
+            timerElement.textContent = `الوقت: ${convertToArabicNumerals(timeLeft)} ثانية`;
+            timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    loadNextQuestion();
+                } else {
+                    timerElement.textContent = `الوقت: ${convertToArabicNumerals(timeLeft)} ثانية`;
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) {
+                finishQuiz();
+                return;
+            }
+            const { question, options } = questions[currentQuestion];
+            questionElement.innerHTML = `
+                <div class="fraction">
+                    <div class="numerator">${question.numerator}</div>
+                    <div class="denominator">${question.denominator}</div>
+                </div>
+            `;
+            dropZone.textContent = '';
+            dropZone.classList.remove('correct', 'wrong');
+            answersContainer.innerHTML = '';
+            shuffleArray(options);
+            options.forEach(option => {
+                const answerDiv = document.createElement('div');
+                answerDiv.innerHTML = `
+                    <div class="fraction">
+                        <div class="numerator">${option.numerator}</div>
+                        <div class="denominator">${option.denominator}</div>
+                    </div>
+                `;
+                answerDiv.className = 'answer';
+                answerDiv.draggable = true;
+                answerDiv.addEventListener('dragstart', () => {
+                    answerDiv.classList.add('dragging');
+                });
+                answerDiv.addEventListener('dragend', () => {
+                    answerDiv.classList.remove('dragging');
+                });
+                answersContainer.appendChild(answerDiv);
+            });
+            questionNumberElement.textContent = convertToArabicNumerals(currentQuestion + 1);
+            startTimer();
+        }
+
+        function finishQuiz() {
+            clearInterval(timer);
+            headerElement.style.display = 'none';
+            questionElement.textContent = 'انتهى الاختبار! شكراً لمشاركتك.';
+            dropZone.style.display = 'none';
+            answersContainer.style.display = 'none';
+        }
+
+        function loadNextQuestion() {
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        restartButton.addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            scoreElement.textContent = '٠';
+            headerElement.style.display = 'flex';
+            dropZone.style.display = 'flex';
+            answersContainer.style.display = 'flex';
+            loadQuestion();
+        });
+
+        endButton.addEventListener('click', finishQuiz);
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const draggedElement = document.querySelector('.dragging');
+            if (draggedElement) {
+                dropZone.innerHTML = draggedElement.innerHTML;
+                checkAnswer(draggedElement.querySelector('.numerator').textContent, draggedElement.querySelector('.denominator').textContent);
+            }
+        });
+
+        function checkAnswer(numerator, denominator) {
+            clearInterval(timer);
+            const { correct } = questions[currentQuestion];
+            if (numerator === correct.numerator && denominator === correct.denominator) {
+                dropZone.classList.add('correct');
+                score++;
+                scoreElement.textContent = convertToArabicNumerals(score);
+            } else {
+                dropZone.classList.add('wrong');
+            }
+            setTimeout(loadNextQuestion, 1000);
+        }
+
+        loadQuestion();
+    </script>
+</body>
+
+</html>
